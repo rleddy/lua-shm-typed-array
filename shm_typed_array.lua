@@ -27,7 +27,7 @@ ffi.cdef[[
 	void detachAll(void);
 	unsigned long int getTotalSize(void);
 	key_t create(unsigned int count, ShmBufferType type, int key);
-	key_t create_object_regions(unsigned int count, size_t type_size, int key);
+	key_t get_object_region(key_t key,size_t type_size);
 	key_t get(key_t key, ShmBufferType type);
 	//
 	Mem_resource *MemResrouceFromKey(key_t key);

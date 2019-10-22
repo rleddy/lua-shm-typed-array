@@ -211,7 +211,7 @@ inline key_t _create(unsigned int count, ShmBufferType type, size_t type_size, i
 }
 
 //
-key_t create_object_regions(unsigned int count, size_t type_size, int key) {
+key_t create_object_region(unsigned int count, size_t type_size, int key) {
 	if ( key < 0 ) return(-1);
 	else if ( key > 0 ){
 		if ( !( (key >= keyMin) && (key <= keyMax) ) ) {
@@ -222,7 +222,7 @@ key_t create_object_regions(unsigned int count, size_t type_size, int key) {
 	if ( !(count >= lengthMin && count <= lengthMax) ) {
 		return -1;
 	}
-	if ( !(type_size >= userSizeMin && count <= userSizeMax) ) {
+	if ( !(type_size >= userSizeMin && type_size <= userSizeMax) ) {
 		return -1;
 	}
 	//
@@ -248,6 +248,56 @@ key_t create(unsigned int count, ShmBufferType type, int key) {
 }
 
 
+
+inline key_t _get_and_set_memres(size_t type_size, int key, ShmBufferType type) {
+	unsigned int count = 0;
+	int resId = 0;
+	void *ref = NULL;
+	int status = _get(key,count,0,0,type_size,&ref,&resId);
+	//
+	if ( status == 0 ) {
+		//
+		Mem_resource *ms = new Mem_resource();
+		g_all_regions[key] = ms;
+		//
+		//
+		ms->count = count;  // set by memsize (has to be found)
+		ms->key = key;
+		ms->type = type;
+		ms->el_sz = type_size;
+		ms->_shared_resource = ref;
+		ms->resid = resId;
+		//
+		return(key);
+	}
+	//
+	return(-1);
+}
+
+
+
+
+key_t get_object_region(key_t key,size_t type_size) {
+	if ( key < 0 ) return(-1);
+	else if ( key > 0 ){
+		if ( !( (key >= keyMin) && (key <= keyMax) ) ) {
+			return -1;
+		}
+	}
+	if ( !(type_size >= userSizeMin && type_size <= userSizeMax) ) {
+		return -1;
+	}
+	//
+	map<key_t,Mem_resource *>::iterator fnd = g_all_regions.find(key);
+	if ( fnd != g_all_regions.end() ) {
+		return(key);
+	} else {
+		return(_get_and_set_memres(type_size, key, SHMBT_USER));
+	}
+	return(-1);
+}
+
+
 key_t get(key_t key, ShmBufferType type) {
 	if ( key < 0 ) return(-1);
 	else if ( key > 0 ){
@@ -255,39 +305,17 @@ key_t get(key_t key, ShmBufferType type) {
 			return -1;
 		}
 	}
-	if ( type < 0 || type > SHMBT_FLOAT64 ) type = SHMBT_BUFFER;
-
+	if ( type < 0 || type >= SHMBT_USER ) type = SHMBT_BUFFER;
 	//
 	map<key_t,Mem_resource *>::iterator fnd = g_all_regions.find(key);
 	if ( fnd != g_all_regions.end() ) {
 		return(key);
 	} else {
-		
+		//
 		size_t type_size = getSize1ForShmBufferType(type);
-		unsigned int count = 0;
-		int resId = 0;
-		void *ref = NULL;
-		int status = _get(key,count,0,0,type_size,&ref,&resId);
-		
-		if ( status == 0 ) {
-			//
-			key_t k = key;
-			Mem_resource *ms = new Mem_resource();
-			g_all_regions[key] = ms;
-			//
-			//
-			ms->count = count;  // set by memsize (has to be found)
-			ms->key = k;
-			ms->type = type;
-			ms->el_sz = type_size;
-			ms->_shared_resource = ref;
-			ms->resid = resId;
-			//
-			return(k);
-		}
-		
+		//
+		return(_get_and_set_memres(type_size, key, type));
 	}
-	
 	return(-1);
 }
 

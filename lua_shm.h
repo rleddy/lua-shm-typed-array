@@ -9,7 +9,7 @@
 #include <sys/shm.h>
 #include <cmath>
 #include <complex>
-
+//
 #include <stdio.h>      /* printf, scanf, puts, NULL */
 #include <stdlib.h>     /* srand, rand */
 #include <time.h>       /* time */
@@ -154,8 +154,9 @@ extern "C" {
 	 */
 	key_t create(unsigned int count, ShmBufferType type, int key);
 	
-	key_t create_object_regions(unsigned int count, size_t type_size, int key);
-	
+	key_t create_object_region(unsigned int count, size_t type_size, int key);
+	key_t get_object_region(key_t key,size_t type_size);
+
 	/**
 	 * Get shared memory segment
 	 * @param {int} key - integer key of shared memory segment
